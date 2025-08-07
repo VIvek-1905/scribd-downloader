@@ -1,0 +1,37 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+
+# PyInstaller build folders
+dist/
+build/
+*.spec
+
+# Temporary files
+*.log
+*.tmp
+.tmp/
+
+# PDF and image output
+*.pdf
+*.jpg
+*.jpeg
+*.png
+
+# Environment folders
+.venv/
+venv/
+env/
+
+# Executables
+*.exe
+*.msi
+
+# VSCode and OS junk
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Python egg metadata
+*.egg-info/
+.eggs/
