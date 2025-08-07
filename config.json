@@ -1,0 +1,40 @@
+{
+  "output_directory": "./",
+  "temp_directory": "./.tmp",
+  "cleanup_temp_files": true,
+  "pdf_filename_format": "{scribd_title}.pdf",
+  "ocr": {
+    "enabled": true,
+    "language": "eng",
+    "tesseract_path": "C:/Program Files/Tesseract-OCR/tesseract.EXE",
+    "font_size_overlay": 8,
+    "overlay_position": [20, 20]
+  },
+  "gui": {
+    "default_url": "",
+    "window": {
+      "title": "Scribd Image + Text PDF Downloader",
+      "width": 400,
+      "height": 200,
+      "resizable": false
+    },
+    "theme": "light",
+    "status_colors": {
+      "success": "#28a745",
+      "error": "#dc3545",
+      "default": "#333"
+    }
+  },
+  "network": {
+    "timeout_seconds": 15,
+    "retry_attempts": 3
+  },
+  "progress_bar": {
+    "enabled": true,
+    "style": {
+      "filled": "⬢",
+      "empty": "⬡",
+      "width": 60
+    }
+  }
+}

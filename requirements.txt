@@ -1,0 +1,5 @@
+aiohttp
+PyMuPDF
+pillow
+pytesseract
+PyQt6
