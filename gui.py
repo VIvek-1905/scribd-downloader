@@ -75,6 +75,7 @@ class ScribdDownloader(QWidget):
         self.download_button.setEnabled(False)
 
         try:
+            # Run the script as a subprocess so the GUI won't freeze while the console prints progress
             subprocess.run([sys.executable, "main.py", url], check=True)
             self.set_status("success", "✅ Done! PDF created.")
         except subprocess.CalledProcessError:
@@ -82,6 +83,7 @@ class ScribdDownloader(QWidget):
             QMessageBox.critical(self, "Error", "Download or conversion failed.")
         finally:
             self.download_button.setEnabled(True)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

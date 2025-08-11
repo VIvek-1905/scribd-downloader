@@ -1,14 +1,27 @@
+import json
+import os
+import sys
+
+# --- Safety check: ensure PyMuPDF (pymupdf) is installed and not the old 'fitz' package ---
+try:
+    import fitz  # PyMuPDF exposes itself as "fitz"
+    # quick sanity checks:
+    if not hasattr(fitz, "open") or "PyMuPDF" not in (getattr(fitz, "__doc__", "") or ""):
+        raise ImportError("Detected a wrong 'fitz' package. Please run: pip uninstall fitz && pip install pymupdf")
+except Exception as e:
+    raise SystemExit(f"❌ {e}")
+
+# --- now the rest of the imports ---
 import aiohttp
 import asyncio
-import os
 import glob
-import sys
-import fitz  # PyMuPDF
+import fitz  # safe now (PyMuPDF)
 from PIL import Image
 import json
 
 # Load config
-with open("config.json", "r", encoding="utf-8") as f:
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
+with open(CONFIG_PATH, "r", encoding="utf-8") as f:
     CONFIG = json.load(f)
 
 # Extract config values
@@ -49,7 +62,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 class ProgressBar:
     def __init__(self, total):
-        self.total = total
+        self.total = max(1, total)
         self.symbol = PB_FILLED
         self.empty = PB_EMPTY
         self.width = PB_WIDTH
@@ -62,7 +75,7 @@ class ProgressBar:
         filled = int((self.current / self.total) * self.width)
         bar = self.symbol * filled + self.empty * (self.width - filled)
         print(f"\r[{bar}] {self.current}/{self.total} ({(self.current/self.total)*100:.0f}%)", end="")
-        if self.current == self.total:
+        if self.current >= self.total:
             print("\n✅ Download Complete")
 
 
@@ -77,8 +90,12 @@ async def fetch_links(url):
             lines = html.split("\n")
             links = [
                 line.split('"')[1].replace("scribdassets", "scribd").replace("pages", "images").replace("jsonp", "jpg")
-                for line in lines if "contentUrl: \"https://" in line
+                for line in lines if 'contentUrl: "https://' in line
             ]
+            if not links:
+                # try a looser parse if the precise token wasn't found
+                links2 = [part for part in html.split('"') if part.startswith("https://") and ("pages" in part or "images" in part)]
+                links = links2
             print("🔗 Links fetched.")
             return links
         except Exception as e:
@@ -87,7 +104,11 @@ async def fetch_links(url):
 
 
 def sort_key(x):
-    return int(os.path.basename(x).split("-")[0])
+    # expects filenames that start with a page number like "001-....jpg"
+    try:
+        return int(os.path.basename(x).split("-")[0])
+    except Exception:
+        return 0
 
 
 async def download_image(session, link, prog):
@@ -130,6 +151,7 @@ def create_text_image_pdf(output_file):
 
     for image_path in image_files:
         try:
+            # open image as pixmap via PyMuPDF-friendly method
             img_doc = fitz.open(image_path)
             pix = img_doc[0].get_pixmap()
             page = doc.new_page(width=pix.width, height=pix.height)
@@ -159,6 +181,8 @@ async def main():
     url = sys.argv[1]
     try:
         links = await fetch_links(url)
+        if not links:
+            raise Exception("No image links found on the provided page.")
         await download_images(links)
 
         scribd_title = url.split("/")[-1].replace("-", " ")
@@ -170,8 +194,16 @@ async def main():
 
         if CLEANUP:
             for f in glob.glob(os.path.join(TEMP_DIR, "*.jpg")):
-                os.remove(f)
-            os.rmdir(TEMP_DIR)
+                try:
+                    os.remove(f)
+                except Exception:
+                    pass
+            # remove temp dir if empty
+            try:
+                if os.path.isdir(TEMP_DIR) and not os.listdir(TEMP_DIR):
+                    os.rmdir(TEMP_DIR)
+            except Exception:
+                pass
 
         print(f"\n✅ Done: {output_path}")
 
