@@ -13,7 +13,7 @@ This tool allows you to **download images and extract overlay text** from a publ
 
 ---
 
-## 🛠 Requirements
+## Requirements
 
 Install all dependencies using:
 
